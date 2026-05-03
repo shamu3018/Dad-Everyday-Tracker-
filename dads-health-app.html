@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>💚 Dad's Health</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#080f1a;overflow-x:hidden;font-family:'DM Sans',sans-serif}
+input,textarea,select{font-family:'DM Sans',sans-serif}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(0.4)}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:#1e3a5a;border-radius:2px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px #00e67622}50%{box-shadow:0 0 36px #00e67644}}
+.fu{animation:fadeUp 0.38s ease both}
+.fu2{animation:fadeUp 0.38s 0.05s ease both}
+.fu3{animation:fadeUp 0.38s 0.10s ease both}
+.fu4{animation:fadeUp 0.38s 0.15s ease both}
+.fu5{animation:fadeUp 0.38s 0.20s ease both}
+.fu6{animation:fadeUp 0.38s 0.25s ease both}
+.fu7{animation:fadeUp 0.38s 0.30s ease both}
+.fu8{animation:fadeUp 0.38s 0.35s ease both}
+.fu9{animation:fadeUp 0.38s 0.40s ease both}
+.pop:active{animation:pop 0.18s ease}
+.glowcard{animation:glow 3s ease infinite}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useCallback}=React;
+const SK="dads-health-v3";
+
+const PREFILL={
+  "2026-05-01":{morning_drink:"Plain Water",breakfast:"Chapati + Dal",lunch:"Ragi Ball + Sambar",evening_snack:"Fried Snack",dinner:"Idli + Poori",coffee_count:2,coffee_sugar:false,steps:10000,exercise:"Walking",junk:true,junk_note:"Jaggery laddu, musk melon juice",water:4,medicine:true,notes:"Good first day!"},
+  "2026-05-02":{morning_drink:"Methi Water",breakfast:"Idli + Sambar",lunch:"Ladies Finger Gojju",evening_snack:"Peanuts",dinner:"Ragi Roti + Idli",coffee_count:2,coffee_sugar:false,steps:25152,exercise:"Walking",junk:false,junk_note:"",water:5,medicine:true,notes:"Incredible 25k steps!"}
+};
+
+const OPTS={
+  morning:[{v:"Methi Water",e:"🌿",g:true},{v:"Ragi Ambli",e:"🌾",g:true},{v:"Warm Lemon Water",e:"🍋",g:true},{v:"Plain Water",e:"💧",g:true},{v:"Other",e:"",g:false}],
+  breakfast:[{v:"Idli + Sambar",e:"🫓",g:true},{v:"Ragi Ambli",e:"🌾",g:true},{v:"Chapati + Dal",e:"🫓",g:true},{v:"Dosa + Chutney",e:"",g:true},{v:"Upma",e:"",g:true},{v:"Poha",e:"",g:true},{v:"Oats",e:"",g:true},{v:"Other",e:"",g:false}],
+  lunch:[{v:"Ragi Ball + Sambar",e:"🫙",g:true},{v:"Ladies Finger Gojju",e:"🥗",g:true},{v:"Chapati + Sabzi",e:"",g:true},{v:"Khichdi",e:"",g:true},{v:"Pulka + Curry",e:"",g:true},{v:"Rice + Dal",e:"🍚",g:false},{v:"Other",e:"",g:false}],
+  snack:[{v:"Peanuts",e:"🥜",g:true},{v:"Almonds",e:"",g:true},{v:"Walnuts",e:"",g:true},{v:"Whole Fruit",e:"🍎",g:true},{v:"Buttermilk",e:"🥛",g:true},{v:"Sprouts",e:"",g:true},{v:"Biscuits",e:"⚠️",g:false,b:true},{v:"Fried Snack",e:"❌",g:false,b:true},{v:"Nothing",e:"",g:false}],
+  dinner:[{v:"Ragi Roti + Dal",e:"🌾",g:true},{v:"2 Idli + Sambar",e:"🫓",g:true},{v:"Chapati + Sabzi",e:"",g:true},{v:"Khichdi",e:"",g:true},{v:"Pulka + Curry",e:"",g:true},{v:"Rice + Dal",e:"🍚",g:false,b:true},{v:"Other",e:"",g:false}],
+  exercise:[{v:"Walking",e:"🚶",g:true},{v:"Yoga",e:"🧘",g:true},{v:"Cycling",e:"🚴",g:true},{v:"Swimming",e:"🏊",g:true},{v:"Stretching",e:"",g:true},{v:"Home Workout",e:"💪",g:true},{v:"None",e:"",g:false,b:false}]
+};
+
+const GOOD_VALS=["Methi Water","Ragi Ambli","Warm Lemon Water","Plain Water","Idli + Sambar","Chapati + Dal","Dosa + Chutney","Upma","Poha","Oats","Ragi Ball + Sambar","Ladies Finger Gojju","Chapati + Sabzi","Khichdi","Pulka + Curry","Peanuts","Almonds","Walnuts","Whole Fruit","Buttermilk","Sprouts","Ragi Roti + Dal","2 Idli + Sambar","Walking","Yoga","Cycling","Swimming","Stretching","Home Workout"];
+const BAD_VALS=["Biscuits","Fried Snack","Rice + Dal","Idli + Poori"];
+
+const emptyLog=()=>({morning_drink:"",breakfast:"",lunch:"",evening_snack:"",dinner:"",coffee_count:0,coffee_sugar:true,steps:"",exercise:"",junk:false,junk_note:"",water:0,medicine:false,early_dinner:false,notes:""});
+
+function score(l){
+  if(!l)return 0;
+  let s=0;
+  const st=parseInt(l.steps)||0;
+  if(st>=10000)s+=20;else if(st>=7000)s+=14;else if(st>=5000)s+=10;else if(st>=2000)s+=5;
+  [l.morning_drink,l.breakfast,l.lunch,l.evening_snack,l.dinner].forEach(v=>{
+    if(GOOD_VALS.includes(v))s+=8;else if(BAD_VALS.includes(v))s-=5;else if(v&&v!=="Other"&&v!=="Nothing")s+=3;
+  });
+  if(l.coffee_count>0&&!l.coffee_sugar)s+=6;
+  if(l.exercise&&l.exercise!=="None")s+=8;
+  if(l.water>=8)s+=8;else if(l.water>=5)s+=5;else if(l.water>=3)s+=2;
+  if(l.medicine)s+=8;
+  if(l.junk)s-=12;
+  if(l.early_dinner)s+=4;
+  return Math.min(100,Math.max(0,s));
+}
+
+const sc=s=>s>=85?"#00e676":s>=70?"#4ade80":s>=55?"#fbbf24":"#f87171";
+const sl=s=>s>=90?"SUPERSTAR 🏆":s>=80?"EXCELLENT 🌟":s>=70?"GREAT JOB 💪":s>=55?"GOOD START 👍":"KEEP GOING 📈";
+const today=()=>new Date().toISOString().split("T")[0];
+const fmt=d=>new Date(d+"T00:00:00").toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"});
+
+const load=()=>{try{const r=localStorage.getItem(SK);return r?JSON.parse(r):null;}catch{return null;}};
+const persist=d=>{try{localStorage.setItem(SK,JSON.stringify(d));}catch{}};
+
+// Ring
+function Ring({s,size=110}){
+  const r=(size-14)/2,c=2*Math.PI*r,f=(s/100)*c,col=sc(s);
+  return(
+    <div style={{position:"relative",width:size,height:size,flexShrink:0}}>
+      <svg width={size} height={size} style={{transform:"rotate(-90deg)"}}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#0d1e30" strokeWidth={9}/>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth={9}
+          strokeDasharray={`${f} ${c}`} strokeLinecap="round"
+          style={{transition:"stroke-dasharray 0.9s cubic-bezier(.4,0,.2,1)",filter:`drop-shadow(0 0 5px ${col}99)`}}/>
+      </svg>
+      <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+        <span style={{fontSize:size>100?24:15,fontWeight:900,color:col,fontFamily:"Fraunces,serif",lineHeight:1}}>{s}</span>
+        <span style={{fontSize:8,color:"#2a4060",fontWeight:700,marginTop:1}}>/100</span>
+      </div>
+    </div>
+  );
+}
+
+// Toggle
+function Toggle({on,onToggle}){
+  return(
+    <button onClick={onToggle} style={{width:52,height:26,borderRadius:13,border:"none",cursor:"pointer",position:"relative",background:on?"#00e676":"#162030",transition:"background 0.25s",flexShrink:0}}>
+      <div style={{position:"absolute",top:3,left:on?26:3,width:20,height:20,borderRadius:10,background:"white",transition:"left 0.22s",boxShadow:"0 1px 4px #0006"}}/>
+    </button>
+  );
+}
+
+// Pill button
+function Pill({label,emoji,active,good,bad,onClick}){
+  const ac=active?(good?"#00e676":bad?"#f87171":"#38bdf8"):"transparent";
+  const bc=active?(good?"#00e676":bad?"#f87171":"#38bdf8"):(good?"#00e67633":bad?"#f8717133":"#162030");
+  const tc=active?"#080f1a":(good?"#00e676":bad?"#f87171":"#4a6a80");
+  return(
+    <button className="pop" onClick={onClick} style={{
+      padding:"8px 13px",borderRadius:100,border:`1.5px solid ${bc}`,background:ac,
+      color:tc,fontSize:13,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",
+      transition:"all 0.16s",fontFamily:"'DM Sans',sans-serif",
+      boxShadow:active?`0 2px 12px ${good?"#00e67633":bad?"#f8717133":"#38bdf833"}`:"none"
+    }}>{emoji?`${emoji} ${label}`:label}</button>
+  );
+}
+
+// Card
+function Card({children,cls="",style={}}){
+  return(
+    <div className={cls} style={{background:"linear-gradient(145deg,#0b1929,#0e2035)",borderRadius:20,padding:"17px 15px",marginBottom:11,border:"1px solid #142540",boxShadow:"0 4px 20px #00000055",position:"relative",overflow:"hidden",...style}}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,#ffffff08,transparent)",pointerEvents:"none"}}/>
+      {children}
+    </div>
+  );
+}
+
+function SL({icon,children}){
+  return <div style={{fontSize:9,fontWeight:800,color:"#2a4a60",textTransform:"uppercase",letterSpacing:2.5,marginBottom:11,display:"flex",alignItems:"center",gap:6}}>{icon&&<span style={{fontSize:13}}>{icon}</span>}{children}</div>;
+}
+
+// App
+function App(){
+  const [tab,setTab]=useState("log");
+  const [logs,setLogs]=useState({});
+  const [tlog,setTlog]=useState(emptyLog());
+  const [hba1c,setHba1c]=useState([{date:"2026-05-01",value:8.1}]);
+  const [saved,setSaved]=useState(false);
+  const [active,setActive]=useState(null);
+  const [tidx,setTidx]=useState(0);
+  const [newHb,setNewHb]=useState("");
+  const [newHbD,setNewHbD]=useState(today());
+
+  useEffect(()=>{
+    const d=load();
+    const sl=d?.logs||{};
+    const ml={...PREFILL,...sl};
+    setLogs(ml);
+    if(d?.hba1c)setHba1c(d.hba1c);
+    const tod=today();
+    if(ml[tod])setTlog(ml[tod]);
+    persist({logs:ml,hba1c:d?.hba1c||[{date:"2026-05-01",value:8.1}]});
+  },[]);
+
+  const save=useCallback((nl,nh)=>{persist({logs:nl,hba1c:nh||hba1c});setSaved(true);setTimeout(()=>setSaved(false),2000);},[hba1c]);
+  const upd=v=>setTlog(p=>({...p,...v}));
+  const saveDay=()=>{const tod=today();const nl={...logs,[tod]:tlog};setLogs(nl);save(nl);};
+
+  const allDays=Object.keys(logs).sort().reverse();
+  const tod=today();
+  const dayScore=score(tlog);
+  const streak=(()=>{let s=0,d=new Date();for(let i=0;i<365;i++){const ds=d.toISOString().split("T")[0];if(!logs[ds]&&ds!==tod)break;s++;d.setDate(d.getDate()-1);}return s;})();
+  const avg=allDays.length>0?Math.round(allDays.reduce((a,d)=>a+score(logs[d]),0)/allDays.length):0;
+  const best=allDays.reduce((a,d)=>Math.max(a,parseInt(logs[d]?.steps)||0),0);
+
+  // ── LOG ───────────────────────────────────────────
+  const LogPage=()=>(
+    <div style={{padding:"13px 13px 14px"}}>
+
+      {/* Score hero */}
+      <Card cls="fu glowcard" style={{background:"linear-gradient(145deg,#060e1c,#0a1e30)",border:"1px solid #00e67622"}}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <Ring s={dayScore} size={106}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:8,color:"#1e3a50",fontWeight:800,letterSpacing:3,textTransform:"uppercase"}}>Today's Score</div>
+            <div style={{fontSize:18,fontWeight:900,color:sc(dayScore),marginTop:5,fontFamily:"Fraunces,serif",lineHeight:1.2}}>{sl(dayScore)}</div>
+            <div style={{fontSize:10,color:"#1e3a50",marginTop:5}}>{fmt(tod)}</div>
+            {saved&&<div style={{fontSize:11,color:"#00e676",marginTop:5,fontWeight:800}}>✓ Saved!</div>}
+          </div>
+          <div style={{textAlign:"right",flexShrink:0}}>
+            <div style={{fontSize:18,color:"#fbbf24",fontWeight:900,fontFamily:"Fraunces,serif"}}>🔥{streak}</div>
+            <div style={{fontSize:9,color:"#1e3a50",fontWeight:700}}>DAY STREAK</div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Morning drink */}
+      <Card cls="fu2">
+        <SL icon="🌅">Morning Drink</SL>
+        <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+          {OPTS.morning.map(o=><Pill key={o.v} label={o.v} emoji={o.e} active={tlog.morning_drink===o.v} good={o.g} onClick={()=>upd({morning_drink:tlog.morning_drink===o.v?"":o.v})}/>)}
+        </div>
+        {tlog.morning_drink==="Methi Water"&&<div style={{marginTop:9,background:"#00e67611",borderRadius:10,padding:"8px 11px",fontSize:12,color:"#00e676",fontWeight:700}}>🌿 Dad's power habit! Clinically lowers fasting sugar.</div>}
+      </Card>
+
+      {/* Breakfast */}
+      <Card cls="fu3">
+        <SL icon="🍽️">Breakfast</SL>
+        <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+          {OPTS.breakfast.map(o=><Pill key={o.v} label={o.v} emoji={o.e} active={tlog.breakfast===o.v} good={o.g} bad={o.b} onClick={()=>upd({breakfast:tlog.breakfast===o.v?"":o.v})}/>)}
+        </div>
+      </Card>
+
+      {/* Coffee */}
+      <Card cls="fu4">
+        <SL icon="☕">Coffee</SL>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:tlog.coffee_count>0?14:0}}>
+          <div style={{fontSize:12,color:"#2a4a60",fontWeight:700,flex:1}}>How many cups today?</div>
+          <div style={{display:"flex",gap:6}}>
+            {[0,1,2,3].map(n=>(
+              <button key={n} className="pop" onClick={()=>upd({coffee_count:n})} style={{
+                width:40,height:40,borderRadius:11,border:`2px solid ${tlog.coffee_count===n?"#38bdf8":"#142540"}`,
+                background:tlog.coffee_count===n?"#38bdf815":"transparent",color:tlog.coffee_count===n?"#38bdf8":"#2a4a60",
+                fontSize:16,fontWeight:900,cursor:"pointer",transition:"all 0.15s",fontFamily:"Fraunces,serif"
+              }}>{n}</button>
+            ))}
+          </div>
+        </div>
+        {tlog.coffee_count>0&&(
+          <>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div>
+                <div style={{fontSize:13,color:"#4a6a80",fontWeight:600}}>Added sugar to coffee?</div>
+                <div style={{fontSize:10,color:"#1e3a50",marginTop:2}}>No sugar = major HbA1c win!</div>
+              </div>
+              <Toggle on={tlog.coffee_sugar} onToggle={()=>upd({coffee_sugar:!tlog.coffee_sugar})}/>
+            </div>
+            {!tlog.coffee_sugar&&<div style={{marginTop:10,background:"#00e67611",borderRadius:10,padding:"8px 11px",fontSize:12,color:"#00e676",fontWeight:700}}>✅ Zero sugar! This habit alone reduces HbA1c over weeks.</div>}
+            {tlog.coffee_sugar&&<div style={{marginTop:10,background:"#f8717111",borderRadius:10,padding:"8px 11px",fontSize:12,color:"#f87171",fontWeight:700}}>⚠️ Try to skip the sugar — even cutting to half helps!</div>}
+          </>
+        )}
+      </Card>
+
+      {/* Lunch */}
+      <Card cls="fu5">
+        <SL icon="🫙">Lunch</SL>
+        <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+          {OPTS.lunch.map(o=><Pill key={o.v} label={o.v} emoji={o.e} active={tlog.lunch===o.v} good={o.g} bad={o.b} onClick={()=>upd({lunch:tlog.lunch===o.v?"":o.v})}/>)}
+        </div>
+      </Card>
+
+      {/* Evening snack */}
+      <Card cls="fu6">
+        <SL icon="🌇">Evening Snack</SL>
+        <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+          {OPTS.snack.map(o=><Pill key={o.v} label={o.v} emoji={o.e} active={tlog.evening_snack===o.v} good={o.g} bad={o.b} onClick={()=>upd({evening_snack:tlog.evening_snack===o.v?"":o.v})}/>)}
+        </div>
+      </Card>
+
+      {/* Dinner */}
+      <Card cls="fu7">
+        <SL icon="🌙">Dinner</SL>
+        <div style={{display:"flex",flexWrap:"wrap",gap:7,marginBottom:12}}>
+          {OPTS.dinner.map(o=><Pill key={o.v} label={o.v} emoji={o.e} active={tlog.dinner===o.v} good={o.g} bad={o.b} onClick={()=>upd({dinner:tlog.dinner===o.v?"":o.v})}/>)}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:10,paddingTop:10,borderTop:"1px solid #0f1f30"}}>
+          <div style={{flex:1}}>
+            <div style={{fontSize:12,color:"#4a6a80",fontWeight:700}}>⏰ Before 7:30 PM?</div>
+            <div style={{fontSize:10,color:"#1e3a50"}}>Early dinner = lower fasting sugar!</div>
+          </div>
+          <Toggle on={tlog.early_dinner} onToggle={()=>upd({early_dinner:!tlog.early_dinner})}/>
+          {tlog.early_dinner&&<span style={{fontSize:11,color:"#00e676",fontWeight:800}}>✓ Great!</span>}
+        </div>
+      </Card>
+
+      {/* Steps */}
+      <Card cls="fu8">
+        <SL icon="👣">Steps Today</SL>
+        <input style={{
+          width:"100%",background:"#060e1c",border:"1px solid #142540",borderRadius:12,
+          padding:"14px",color:"#e8eaf0",fontSize:28,fontWeight:900,outline:"none",
+          fontFamily:"Fraunces,serif",textAlign:"center",letterSpacing:1
+        }} type="number" placeholder="0" value={tlog.steps} onChange={e=>upd({steps:e.target.value})}/>
+        {tlog.steps&&(()=>{
+          const st=parseInt(tlog.steps)||0;
+          const pct=Math.min(100,(st/10000)*100);
+          const col=st>=10000?"#00e676":st>=7000?"#fbbf24":"#f87171";
+          return(
+            <div style={{marginTop:12}}>
+              <div style={{height:7,background:"#060e1c",borderRadius:4,overflow:"hidden",marginBottom:7}}>
+                <div style={{height:"100%",width:`${pct}%`,background:col,borderRadius:4,transition:"width 0.8s cubic-bezier(.4,0,.2,1)",boxShadow:`0 0 8px ${col}77`}}/>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between"}}>
+                <span style={{fontSize:12,color:col,fontWeight:800}}>{st>=10000?"🏅 Goal smashed!":st>=7000?"Almost there!":"Keep going!"}</span>
+                <span style={{fontSize:11,color:"#1e3a50"}}>{st.toLocaleString()} / 10,000</span>
+              </div>
+            </div>
+          );
+        })()}
+      </Card>
+
+      {/* Exercise */}
+      <Card cls="fu9">
+        <SL icon="🏃">Exercise</SL>
+        <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+          {OPTS.exercise.map(o=><Pill key={o.v} label={o.v} emoji={o.e} active={tlog.exercise===o.v} good={o.g} onClick={()=>upd({exercise:tlog.exercise===o.v?"":o.v})}/>)}
+        </div>
+      </Card>
+
+      {/* Junk */}
+      <Card>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:tlog.junk?12:0}}>
+          <div>
+            <SL icon="🍟">Any Junk Today?</SL>
+            <div style={{fontSize:11,color:"#1e3a50",marginTop:-7}}>Fried food, sweets, biscuits, jaggery...</div>
+          </div>
+          <Toggle on={tlog.junk} onToggle={()=>upd({junk:!tlog.junk,junk_note:tlog.junk?"":tlog.junk_note})}/>
+        </div>
+        {tlog.junk?(
+          <div>
+            <div style={{fontSize:11,color:"#f87171",fontWeight:700,marginBottom:6}}>⚠️ What did he have?</div>
+            <input style={{width:"100%",background:"#060e1c",border:"1px solid #f8717133",borderRadius:10,padding:"10px 13px",color:"#e8eaf0",fontSize:13,outline:"none"}}
+              placeholder="e.g. jaggery laddu, biscuits..." value={tlog.junk_note} onChange={e=>upd({junk_note:e.target.value})}/>
+          </div>
+        ):(
+          <div style={{fontSize:12,color:"#00e676",fontWeight:700}}>✅ Junk-free day! Love to see it.</div>
+        )}
+      </Card>
+
+      {/* Water */}
+      <Card>
+        <SL icon="💧">Water — {tlog.water||0} / 10 Glasses</SL>
+        <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:9}}>
+          {[1,2,3,4,5,6,7,8,9,10].map(n=>{
+            const on=(tlog.water||0)>=n;
+            return(
+              <button key={n} className="pop" onClick={()=>upd({water:tlog.water===n?n-1:n})} style={{
+                width:41,height:41,borderRadius:11,
+                border:`2px solid ${on?"#38bdf8":"#142540"}`,
+                background:on?"#38bdf815":"transparent",
+                cursor:"pointer",fontSize:17,transition:"all 0.14s",
+                boxShadow:on?"0 0 8px #38bdf833":"none"
+              }}>💧</button>
+            );
+          })}
+        </div>
+        <div style={{fontSize:12,color:(tlog.water||0)>=8?"#00e676":"#1e3a50",fontWeight:700}}>
+          {(tlog.water||0)>=8?"🎯 Perfect! Kidneys flush excess glucose.":
+           (tlog.water||0)>=5?"Good — 3 more to reach goal!":"Drink more — water flushes blood sugar!"}
+        </div>
+      </Card>
+
+      {/* Medicine */}
+      <Card>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div>
+            <SL icon="💊">Medicine Taken?</SL>
+            <div style={{fontSize:11,color:"#1e3a50",marginTop:-7}}>Works WITH diet — never skip!</div>
+          </div>
+          <Toggle on={tlog.medicine} onToggle={()=>upd({medicine:!tlog.medicine})}/>
+        </div>
+        {tlog.medicine&&<div style={{fontSize:12,color:"#00e676",fontWeight:800,marginTop:9}}>✅ Medicine taken — excellent discipline!</div>}
+      </Card>
+
+      {/* Notes */}
+      <Card>
+        <SL icon="📝">Notes for Today</SL>
+        <textarea style={{width:"100%",background:"#060e1c",border:"1px solid #142540",borderRadius:12,padding:"11px 13px",color:"#e8eaf0",fontSize:13,outline:"none",resize:"vertical",minHeight:70,lineHeight:1.6}}
+          placeholder="How did Dad feel? Anything extra he ate?" value={tlog.notes} onChange={e=>upd({notes:e.target.value})}/>
+      </Card>
+
+      {/* Save */}
+      <button className="pop" onClick={saveDay} style={{
+        width:"100%",padding:"15px",borderRadius:16,border:"none",cursor:"pointer",
+        background:"linear-gradient(135deg,#00c853,#00e676)",color:"#060e1c",
+        fontSize:16,fontWeight:800,fontFamily:"'DM Sans',sans-serif",
+        boxShadow:"0 4px 20px #00e67633"
+      }}>💾  Save Today's Log</button>
+    </div>
+  );
+
+  // ── PROGRESS ──────────────────────────────────────
+  const ProgressPage=()=>{
+    const lat=hba1c[hba1c.length-1]?.value||8.1;
+    const dropped=hba1c.length>1?(hba1c[0].value-lat).toFixed(1):0;
+    const addHb=()=>{
+      if(!newHb)return;
+      const u=[...hba1c,{date:newHbD,value:parseFloat(newHb)}].sort((a,b)=>a.date.localeCompare(b.date));
+      setHba1c(u);const d=load()||{};persist({...d,hba1c:u});setNewHb("");
+    };
+    return(
+      <div style={{padding:"13px 13px 14px"}}>
+        <Card cls="fu" style={{background:"linear-gradient(145deg,#0e051e,#180838)",border:"1px solid #7c4dff33"}}>
+          <div style={{fontSize:8,color:"#7c4dff",fontWeight:800,letterSpacing:3,textTransform:"uppercase",marginBottom:12}}>🩸 HbA1c Journey</div>
+          <div style={{display:"flex",alignItems:"flex-end",gap:12,marginBottom:16}}>
+            <div><div style={{fontSize:8,color:"#3a2060",fontWeight:800,letterSpacing:2,textTransform:"uppercase"}}>Current</div>
+              <div style={{fontSize:52,fontWeight:900,color:"#f472b6",lineHeight:1,fontFamily:"Fraunces,serif"}}>{lat}<span style={{fontSize:22}}>%</span></div>
+            </div>
+            <div style={{fontSize:20,color:"#2a1840",paddingBottom:10}}>→</div>
+            <div><div style={{fontSize:8,color:"#3a2060",fontWeight:800,letterSpacing:2,textTransform:"uppercase"}}>Target</div>
+              <div style={{fontSize:52,fontWeight:900,color:"#00e676",lineHeight:1,fontFamily:"Fraunces,serif"}}>7.2<span style={{fontSize:22}}>%</span></div>
+            </div>
+          </div>
+          <div style={{height:9,background:"#0f0520",borderRadius:5,overflow:"hidden",position:"relative",marginBottom:5}}>
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,#00e676,#fbbf24,#f87171)"}}/>
+            <div style={{position:"absolute",top:0,bottom:0,left:`${((7.2-5.7)/(10-5.7))*100}%`,width:2.5,background:"white",boxShadow:"0 0 4px white"}}/>
+            <div style={{position:"absolute",top:0,bottom:0,left:`${((lat-5.7)/(10-5.7))*100}%`,width:2.5,background:"#0d0820"}}/>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:8,color:"#2a1840",fontWeight:800,letterSpacing:1,marginBottom:14}}>
+            <span>5.7%</span><span>TARGET 7.2%</span><span>10%+</span>
+          </div>
+          <div style={{background:"#ffffff08",borderRadius:12,padding:"10px 13px",fontSize:13,color:"#a090d0",lineHeight:1.5}}>
+            {dropped>0?`🎉 Already dropped ${dropped}%! `:""}
+            <strong style={{color:"#fbbf24"}}>Need {(lat-7.2).toFixed(1)}% more.</strong> With this consistency — 3–4 months! 💪
+          </div>
+        </Card>
+
+        <Card cls="fu2">
+          <SL icon="➕">Add New HbA1c Reading</SL>
+          <div style={{display:"flex",gap:8,marginBottom:10}}>
+            <input style={{flex:1,background:"#060e1c",border:"1px solid #142540",borderRadius:10,padding:"10px 12px",color:"#e8eaf0",fontSize:20,fontWeight:900,outline:"none",fontFamily:"Fraunces,serif",textAlign:"center"}}
+              type="number" step="0.1" min="5" max="14" placeholder="7.8" value={newHb} onChange={e=>setNewHb(e.target.value)}/>
+            <input style={{flex:1,background:"#060e1c",border:"1px solid #142540",borderRadius:10,padding:"10px 12px",color:"#e8eaf0",fontSize:12,outline:"none"}}
+              type="date" value={newHbD} onChange={e=>setNewHbD(e.target.value)}/>
+          </div>
+          <button className="pop" onClick={addHb} style={{width:"100%",padding:"11px",borderRadius:12,border:"none",background:"linear-gradient(135deg,#5b21b6,#7c4dff)",color:"white",fontSize:14,fontWeight:800,cursor:"pointer"}}>Add Reading</button>
+        </Card>
+
+        <div className="fu3" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:11}}>
+          {[{l:"Day Streak",v:`${streak}🔥`,c:"#fbbf24"},{l:"Avg Score",v:`${avg}/100`,c:"#38bdf8"},{l:"Days Logged",v:allDays.length,c:"#a78bfa"},{l:"Best Steps",v:(best||0).toLocaleString(),c:"#00e676"}].map(s=>(
+            <div key={s.l} style={{background:"linear-gradient(145deg,#0b1929,#0e2035)",borderRadius:15,padding:"15px 11px",border:"1px solid #142540",textAlign:"center"}}>
+              <div style={{fontSize:22,fontWeight:900,color:s.c,fontFamily:"Fraunces,serif"}}>{s.v}</div>
+              <div style={{fontSize:9,color:"#1e3a50",fontWeight:800,textTransform:"uppercase",letterSpacing:1.5,marginTop:4}}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+
+        <Card cls="fu4">
+          <SL icon="📊">HbA1c History</SL>
+          {[...hba1c].reverse().map((r,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:"1px solid #0e1e2e"}}>
+              <span style={{fontSize:11,color:"#1e3a50",minWidth:68,fontWeight:700}}>{fmt(r.date)}</span>
+              <div style={{flex:1,height:5,background:"#060e1c",borderRadius:3,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${((10-r.value)/(10-5.7))*100}%`,background:r.value<=7.2?"#00e676":r.value<=8?"#fbbf24":"#f87171",borderRadius:3}}/>
+              </div>
+              <span style={{fontSize:17,fontWeight:900,color:r.value<=7.2?"#00e676":r.value<=8?"#fbbf24":"#f87171",fontFamily:"Fraunces,serif",minWidth:46,textAlign:"right"}}>{r.value}%</span>
+            </div>
+          ))}
+        </Card>
+
+        <Card cls="fu5">
+          <SL icon="📅">Past Days ({allDays.length} logged)</SL>
+          {allDays.length===0&&<div style={{color:"#1e3a50",fontSize:13,textAlign:"center",padding:20}}>No logs yet — log today first! 💪</div>}
+          {allDays.map(d=>{
+            const lg=logs[d],s2=score(lg),c=sc(s2);
+            return(
+              <div key={d} onClick={()=>setActive(active===d?null:d)} style={{padding:"11px 0",borderBottom:"1px solid #0e1e2e",cursor:"pointer"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:14,color:"#c0d0e0"}}>{fmt(d)}</div>
+                    <div style={{fontSize:11,color:"#1e3a50",marginTop:3,display:"flex",flexWrap:"wrap",gap:8}}>
+                      {lg?.steps?<span>👣{parseInt(lg.steps).toLocaleString()}</span>:""}
+                      {lg?.coffee_count>0?<span>☕×{lg.coffee_count}{!lg.coffee_sugar?"✅":""}</span>:""}
+                      {lg?.exercise&&lg.exercise!=="None"?<span>🏃{lg.exercise}</span>:""}
+                      {lg?.medicine?<span>💊✅</span>:""}
+                      {lg?.junk?<span style={{color:"#f87171"}}>🍟junk</span>:""}
+                    </div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <Ring s={s2} size={46}/>
+                    <span style={{color:"#1e3a50",fontSize:12}}>{active===d?"▲":"▼"}</span>
+                  </div>
+                </div>
+                {active===d&&(
+                  <div style={{marginTop:9,background:"#060e1c",borderRadius:11,padding:12}}>
+                    {[{l:"Morning",v:lg?.morning_drink},{l:"Breakfast",v:lg?.breakfast},{l:"Lunch",v:lg?.lunch},{l:"Snack",v:lg?.evening_snack},{l:"Dinner",v:lg?.dinner},{l:"Exercise",v:lg?.exercise}].map(({l,v})=>v&&(
+                      <div key={l} style={{fontSize:12,display:"flex",gap:8,marginBottom:4}}>
+                        <span style={{color:"#1e3a50",minWidth:58,fontWeight:800}}>{l}:</span>
+                        <span style={{color:GOOD_VALS.includes(v)?"#4ade80":BAD_VALS.includes(v)?"#f87171":"#6a8aa0"}}>{v}</span>
+                      </div>
+                    ))}
+                    {lg?.junk&&<div style={{fontSize:12,color:"#f87171",marginBottom:4}}>🍟 Junk: {lg.junk_note||"Yes"}</div>}
+                    {lg?.water?<div style={{fontSize:12,color:"#38bdf8",marginBottom:4}}>💧 {lg.water} glasses</div>:""}
+                    {lg?.notes&&<div style={{fontSize:11,color:"#1e3a50",fontStyle:"italic",marginTop:5}}>📝 {lg.notes}</div>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </Card>
+      </div>
+    );
+  };
+
+  // ── TIPS ──────────────────────────────────────────
+  const tips=[
+    {i:"💧",t:"Methi Water Every Morning",d:"Soak 1 tsp fenugreek seeds overnight. Drink first thing — before coffee. Proven to lower fasting blood sugar by 10–15 mg/dL. Dad already does this! Keep it forever.",c:"#00897b"},
+    {i:"🚶",t:"Walk 15 Min After Each Meal",d:"Post-meal walks flatten glucose spikes by up to 30%. Just a gentle 10–15 min stroll after lunch and dinner — incredibly powerful for diabetics!",c:"#1565c0"},
+    {i:"🥗",t:"Veggies First, Carbs Last",d:"Always eat salad/sabzi first → then dal/curry → then rice/roti LAST. This simple meal order cuts blood sugar spike by 30%. Zero extra effort!",c:"#2e7d32"},
+    {i:"🌿",t:"Add Cinnamon Daily",d:"Half tsp of cinnamon in warm water or ragi ambli every morning. It acts like natural insulin on body cells. Easy, cheap, powerful over weeks.",c:"#6a1b9a"},
+    {i:"😴",t:"7–8 Hours of Sleep",d:"Poor sleep raises cortisol which directly spikes blood sugar even without eating. Consistent sleep and wake times help the body regulate glucose naturally.",c:"#4527a0"},
+    {i:"🧘",t:"10 Min Deep Breathing",d:"Stress hormones raise blood sugar. Just 10 minutes of morning prayer, breathing exercises, or gentle yoga makes a measurable difference in HbA1c.",c:"#c62828"},
+    {i:"⏰",t:"Dinner Before 7:30 PM",d:"Late dinners don't metabolize well during sleep. Early dinner + 15 min walk after = dramatically lower fasting sugar next morning. Consistency is key!",c:"#e65100"},
+    {i:"🥥",t:"Coconut Every Day",d:"Fresh coconut or coconut chutney — the medium-chain fats slow sugar absorption and improve insulin sensitivity. Already in his diet — keep it!",c:"#00695c"},
+    {i:"🍈",t:"Whole Fruit — Never Juice",d:"Juicing strips the fibre that slows sugar absorption. Always eat whole fruit. Musk melon, guava, and green apple are excellent diabetic choices.",c:"#827717"},
+    {i:"💊",t:"Never Ever Skip Medicine",d:"Diet and exercise work WITH medicines — not instead of them. As HbA1c reaches 7.2%, the doctor may reduce the dose. That's the ultimate reward!",c:"#1a237e"},
+  ];
+
+  const TipsPage=()=>(
+    <div style={{padding:"13px 13px 14px"}}>
+      <Card cls="fu" style={{background:`linear-gradient(145deg,${tips[tidx].c}18,#0b1929)`,border:`1px solid ${tips[tidx].c}44`}}>
+        <div style={{fontSize:8,color:tips[tidx].c,fontWeight:800,letterSpacing:3,textTransform:"uppercase",marginBottom:8}}>💡 TIP {tidx+1} / {tips.length}</div>
+        <div style={{fontSize:40,marginBottom:10}}>{tips[tidx].i}</div>
+        <div style={{fontSize:20,fontWeight:900,color:"#e8eaf0",fontFamily:"Fraunces,serif",marginBottom:10,lineHeight:1.3}}>{tips[tidx].t}</div>
+        <div style={{fontSize:14,color:"#6a8aa0",lineHeight:1.75,marginBottom:16}}>{tips[tidx].d}</div>
+        <div style={{display:"flex",gap:8}}>
+          <button className="pop" onClick={()=>setTidx(i=>(i-1+tips.length)%tips.length)}
+            style={{flex:1,padding:12,background:"#ffffff08",border:"1px solid #142540",borderRadius:12,color:"#6a8aa0",cursor:"pointer",fontWeight:700,fontSize:14}}>← Prev</button>
+          <button className="pop" onClick={()=>setTidx(i=>(i+1)%tips.length)}
+            style={{flex:1,padding:12,background:tips[tidx].c,border:"none",borderRadius:12,color:"white",cursor:"pointer",fontWeight:800,fontSize:14}}>Next →</button>
+        </div>
+      </Card>
+      {tips.map((t,i)=>(
+        <div key={i} onClick={()=>setTidx(i)} style={{
+          background:i===tidx?`${t.c}12`:"linear-gradient(145deg,#0b1929,#0e2035)",
+          borderRadius:15,padding:"13px",marginBottom:8,
+          border:`1px solid ${i===tidx?t.c+"55":"#142540"}`,
+          display:"flex",gap:11,cursor:"pointer",transition:"all 0.18s"
+        }}>
+          <div style={{fontSize:22,flexShrink:0,marginTop:1}}>{t.i}</div>
+          <div>
+            <div style={{fontWeight:800,fontSize:13,color:i===tidx?t.c:"#7a9ab0",fontFamily:"Fraunces,serif",marginBottom:3}}>{t.t}</div>
+            <div style={{fontSize:11,color:"#1e3a50",lineHeight:1.5}}>{t.d.substring(0,90)}...</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return(
+    <div style={{minHeight:"100vh",background:"#080f1a",fontFamily:"'DM Sans',sans-serif",color:"#e8eaf0",paddingBottom:72,position:"relative",zIndex:1}}>
+      {/* Header */}
+      <div style={{background:"linear-gradient(180deg,#0b1828 0%,#08101c 100%)",padding:"16px 15px 13px",borderBottom:"1px solid #0e1e30",position:"sticky",top:0,zIndex:50,backdropFilter:"blur(16px)"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div>
+            <div style={{fontSize:17,fontWeight:900,fontFamily:"Fraunces,serif",letterSpacing:-0.5,color:"#e8eaf0"}}>
+              <span style={{color:"#00e676"}}>💚</span> Dad's Health
+            </div>
+            <div style={{fontSize:9,color:"#1e3a50",marginTop:3,fontWeight:800,letterSpacing:2,textTransform:"uppercase"}}>HbA1c 8.1% → Target 7.2%</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontSize:16,color:"#fbbf24",fontWeight:900,fontFamily:"Fraunces,serif"}}>🔥 {streak}</div>
+            <div style={{fontSize:9,color:"#1e3a50",fontWeight:800,letterSpacing:1}}>{allDays.length} DAYS LOGGED</div>
+          </div>
+        </div>
+      </div>
+
+      {tab==="log"&&<LogPage/>}
+      {tab==="progress"&&<ProgressPage/>}
+      {tab==="tips"&&<TipsPage/>}
+
+      {/* Nav */}
+      <nav style={{position:"fixed",bottom:0,left:0,right:0,background:"#080f1a",borderTop:"1px solid #0e1e30",display:"flex",zIndex:100}}>
+        {[{id:"log",icon:"📋",label:"Log Day"},{id:"progress",icon:"📈",label:"Progress"},{id:"tips",icon:"💡",label:"Tips"}].map(n=>(
+          <button key={n.id} onClick={()=>setTab(n.id)} style={{
+            flex:1,padding:"10px 4px 8px",border:"none",background:"transparent",cursor:"pointer",
+            color:tab===n.id?"#00e676":"#1e3a50",fontSize:9,fontWeight:800,
+            display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+            textTransform:"uppercase",letterSpacing:1.5,transition:"color 0.2s",
+            borderTop:`2px solid ${tab===n.id?"#00e676":"transparent"}`
+          }}>
+            <span style={{fontSize:19}}>{n.icon}</span>{n.label}
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
